@@ -4,13 +4,13 @@
 #include <iostream>
 
 
-#include "nvmlevelhash_db.h"
+#include "nvmbtree_db.h"
 #include "lib/coding.h"
 
 using namespace std;
 
 namespace ycsbc {
-    NvmLevelHash::NvmLevelHash(const char *dbfilename, utils::Properties &props) :noResult(0){
+    NvmBtree::NvmBtree(const char *dbfilename, utils::Properties &props) :noResult(0){
     
         //set option
         SetOptions(props);
@@ -19,14 +19,14 @@ namespace ycsbc {
         }
         
 
-        db_ = new NVMLevelHash();
+        db_ = new NVMBtree();
         if(!db_) {
             printf("creat nvmlevelhash error\n");
             AllocatorExit();
         }
     }
 
-    void NvmLevelHash::SetOptions(utils::Properties &props) {
+    void NvmBtree::SetOptions(utils::Properties &props) {
         path = "/pmem/key";
         valuepath = "/pmem/value";
         nvm_size = 100 * (1ULL << 30);
@@ -38,7 +38,7 @@ namespace ycsbc {
     }
 
 
-    int NvmLevelHash::Read(const std::string &table, const std::string &key, const std::vector<std::string> *fields,
+    int NvmBtree::Read(const std::string &table, const std::string &key, const std::vector<std::string> *fields,
                       std::vector<KVPair> &result) {
         string value;
         uint64_t keyu = char8toint64(key.c_str());
@@ -50,16 +50,18 @@ namespace ycsbc {
     }
 
 
-    int NvmLevelHash::Scan(const std::string &table, const std::string &key, int len, const std::vector<std::string> *fields,
+    int NvmBtree::Scan(const std::string &table, const std::string &key, int len, const std::vector<std::string> *fields,
                       std::vector<std::vector<KVPair>> &result) {
-         std::vector<std::string> values;
-         uint64_t keyu = char8toint64(key.c_str());
-        db_->GetRange(keyu, 0, values, len);
+        std::vector<std::string> values;
+        uint64_t keyu = char8toint64(key.c_str());
+        uint64_t max = ~0;
+        //printf("max:%lu\n",max);
+        db_->GetRange(keyu, max, values, len);
         //printf("scan:%ld,%d\n",values.size(),len);
         return DB::kOK;
     }
 
-    int NvmLevelHash::Insert(const std::string &table, const std::string &key,
+    int NvmBtree::Insert(const std::string &table, const std::string &key,
                         std::vector<KVPair> &values){
         string value;
         value.append(value_size, 'a');
@@ -68,28 +70,28 @@ namespace ycsbc {
         return DB::kOK;
     }
 
-    int NvmLevelHash::Update(const std::string &table, const std::string &key, std::vector<KVPair> &values) {
+    int NvmBtree::Update(const std::string &table, const std::string &key, std::vector<KVPair> &values) {
         return Insert(table,key,values);
     }
 
-    int NvmLevelHash::Delete(const std::string &table, const std::string &key) {
+    int NvmBtree::Delete(const std::string &table, const std::string &key) {
         uint64_t keyu = char8toint64(key.c_str());
         db_->Delete(keyu);
         return DB::kOK;
     }
 
-    void NvmLevelHash::PrintStats() {
+    void NvmBtree::PrintStats() {
         //if(noResult != 0) {
             cout<<"read not found:"<<noResult<<endl;
         //}
     }
 
-    NvmLevelHash::~NvmLevelHash() {
+    NvmBtree::~NvmBtree() {
         delete db_;
         AllocatorExit();
     }
 
-    void NvmLevelHash::SerializeValues(std::vector<KVPair> &kvs, std::string &value) {
+    void NvmBtree::SerializeValues(std::vector<KVPair> &kvs, std::string &value) {
         value.clear();
         PutFixed64(&value, kvs.size());
         for(unsigned int i=0; i < kvs.size(); i++){
@@ -100,7 +102,7 @@ namespace ycsbc {
         }
     }
 
-    void NvmLevelHash::DeSerializeValues(std::string &value, std::vector<KVPair> &kvs){
+    void NvmBtree::DeSerializeValues(std::string &value, std::vector<KVPair> &kvs){
         uint64_t offset = 0;
         uint64_t kv_num = 0;
         uint64_t key_size = 0;

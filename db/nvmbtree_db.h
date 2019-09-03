@@ -2,22 +2,22 @@
 // 
 //
 
-#ifndef YCSB_C_NVMLEVELHASH_DB_H
-#define YCSB_C_NVMLEVELHASH_DB_H
+#ifndef YCSB_C_NVMBTREE_DB_H
+#define YCSB_C_NVMBTREE_DB_H
 
 #include "core/db.h"
 #include <iostream>
 #include <string>
 #include "core/properties.h"
-#include <nvmlevelhash/nvm_levelhash.h>
+#include <nvmbtree/nvm_btree.h>
 
 using std::cout;
 using std::endl;
 
 namespace ycsbc {
-    class NvmLevelHash : public DB{
+    class NvmBtree : public DB{
     public :
-        NvmLevelHash(const char *dbfilename, utils::Properties &props);
+        NvmBtree(const char *dbfilename, utils::Properties &props);
         int Read(const std::string &table, const std::string &key,
                  const std::vector<std::string> *fields,
                  std::vector<KVPair> &result);
@@ -37,10 +37,10 @@ namespace ycsbc {
 
         void PrintStats();
 
-        ~NvmLevelHash();
+        ~NvmBtree();
 
     private:
-        NVMLevelHash *db_;
+        NVMBtree *db_;
         unsigned noResult;
 
         void SetOptions(utils::Properties &props);
@@ -58,4 +58,4 @@ namespace ycsbc {
 }
 
 
-#endif //YCSB_C_NVMLEVELHASH_DB_H
+#endif //YCSB_C_NVMBTREE_DB_H
