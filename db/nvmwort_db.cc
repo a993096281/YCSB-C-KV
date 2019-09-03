@@ -4,13 +4,21 @@
 #include <iostream>
 
 
-#include "nvmbtree_db.h"
+#include "nvmwort_db.h"
 #include "lib/coding.h"
 
 using namespace std;
 
 namespace ycsbc {
-    NvmBtree::NvmBtree(const char *dbfilename, utils::Properties &props) :noResult(0){
+    static inline uint64_t char8toint64(const char *key) {
+        uint64_t value = ((((uint64_t)key[0]) & 0xff) << 56) | ((((uint64_t)key[1]) & 0xff) << 48) |
+                ((((uint64_t)key[2]) & 0xff) << 40) | ((((uint64_t)key[3]) & 0xff) << 32) |
+                ((((uint64_t)key[4]) & 0xff) << 24) | ((((uint64_t)key[5]) & 0xff) << 16) |
+                ((((uint64_t)key[6]) & 0xff) << 8)  | (((uint64_t)key[7]) & 0xff);
+        return value;
+    }
+    
+    NvmWort::NvmWort(const char *dbfilename, utils::Properties &props) :noResult(0){
     
         //set option
         SetOptions(props);
@@ -19,14 +27,14 @@ namespace ycsbc {
         }
         
 
-        db_ = new NVMBtree();
+        db_ = new NVMWort();
         if(!db_) {
             printf("creat nvmlevelhash error\n");
             AllocatorExit();
         }
     }
 
-    void NvmBtree::SetOptions(utils::Properties &props) {
+    void NvmWort::SetOptions(utils::Properties &props) {
         path = "/pmem/key";
         valuepath = "/pmem/value";
         nvm_size = 100 * (1ULL << 30);
@@ -38,7 +46,7 @@ namespace ycsbc {
     }
 
 
-    int NvmBtree::Read(const std::string &table, const std::string &key, const std::vector<std::string> *fields,
+    int NvmWort::Read(const std::string &table, const std::string &key, const std::vector<std::string> *fields,
                       std::vector<KVPair> &result) {
         string value;
         uint64_t keyu = char8toint64(key.c_str());
@@ -50,7 +58,7 @@ namespace ycsbc {
     }
 
 
-    int NvmBtree::Scan(const std::string &table, const std::string &key, int len, const std::vector<std::string> *fields,
+    int NvmWort::Scan(const std::string &table, const std::string &key, int len, const std::vector<std::string> *fields,
                       std::vector<std::vector<KVPair>> &result) {
         std::vector<std::string> values;
         uint64_t keyu = char8toint64(key.c_str());
@@ -61,7 +69,7 @@ namespace ycsbc {
         return DB::kOK;
     }
 
-    int NvmBtree::Insert(const std::string &table, const std::string &key,
+    int NvmWort::Insert(const std::string &table, const std::string &key,
                         std::vector<KVPair> &values){
         string value;
         value.append(value_size, 'a');
@@ -70,28 +78,28 @@ namespace ycsbc {
         return DB::kOK;
     }
 
-    int NvmBtree::Update(const std::string &table, const std::string &key, std::vector<KVPair> &values) {
+    int NvmWort::Update(const std::string &table, const std::string &key, std::vector<KVPair> &values) {
         return Insert(table,key,values);
     }
 
-    int NvmBtree::Delete(const std::string &table, const std::string &key) {
+    int NvmWort::Delete(const std::string &table, const std::string &key) {
         uint64_t keyu = char8toint64(key.c_str());
         db_->Delete(keyu);
         return DB::kOK;
     }
 
-    void NvmBtree::PrintStats() {
+    void NvmWort::PrintStats() {
         //if(noResult != 0) {
             cout<<"read not found:"<<noResult<<endl;
         //}
     }
 
-    NvmBtree::~NvmBtree() {
+    NvmWort::~NvmWort() {
         delete db_;
         AllocatorExit();
     }
 
-    void NvmBtree::SerializeValues(std::vector<KVPair> &kvs, std::string &value) {
+    void NvmWort::SerializeValues(std::vector<KVPair> &kvs, std::string &value) {
         value.clear();
         PutFixed64(&value, kvs.size());
         for(unsigned int i=0; i < kvs.size(); i++){
@@ -102,7 +110,7 @@ namespace ycsbc {
         }
     }
 
-    void NvmBtree::DeSerializeValues(std::string &value, std::vector<KVPair> &kvs){
+    void NvmWort::DeSerializeValues(std::string &value, std::vector<KVPair> &kvs){
         uint64_t offset = 0;
         uint64_t kv_num = 0;
         uint64_t key_size = 0;
