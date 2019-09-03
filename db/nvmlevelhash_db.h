@@ -2,22 +2,22 @@
 // 
 //
 
-#ifndef YCSB_C_ROCKSDB_DB_H
-#define YCSB_C_ROCKSDB_DB_H
+#ifndef YCSB_C_NVMLEVELHASH_DB_H
+#define YCSB_C_NVMLEVELHASH_DB_H
 
 #include "core/db.h"
 #include <iostream>
 #include <string>
 #include "core/properties.h"
-#include <scaledkv/scaled_kv.h>
+#include <nvmlevelhash/nvm_levelhash.h>
 
 using std::cout;
 using std::endl;
 
 namespace ycsbc {
-    class ScaledKV : public DB{
+    class NvmLevelHash : public DB{
     public :
-        ScaledKV(const char *dbfilename, utils::Properties &props);
+        NvmLevelHash(const char *dbfilename, utils::Properties &props);
         int Read(const std::string &table, const std::string &key,
                  const std::vector<std::string> *fields,
                  std::vector<KVPair> &result);
@@ -37,10 +37,10 @@ namespace ycsbc {
 
         void PrintStats();
 
-        ~ScaledKV();
+        ~NvmLevelHash();
 
     private:
-        scaledkv::NVMScaledKV *db_;
+        NVMLevelHash *db_;
         unsigned noResult;
 
         void SetOptions(utils::Properties &props);
@@ -51,13 +51,11 @@ namespace ycsbc {
         std::string valuepath;
         size_t nvm_size;
         size_t nvm_value_size;
-        int m;
         size_t key_size;
         size_t value_size;
-        size_t buf_size;
 
     };
 }
 
 
-#endif //YCSB_C_ROCKSDB_DB_H
+#endif //YCSB_C_NVMLEVELHASH_DB_H

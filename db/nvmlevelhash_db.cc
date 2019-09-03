@@ -1,16 +1,16 @@
 //
-// Created by wujy on 1/23/19.
+// 
 //
 #include <iostream>
 
 
-#include "scaledkv_db.h"
+#include "nvmlevelhash_db.h"
 #include "lib/coding.h"
 
 using namespace std;
 
 namespace ycsbc {
-    ScaledKV::ScaledKV(const char *dbfilename, utils::Properties &props) :noResult(0){
+    NvmLevelHash::NvmLevelHash(const char *dbfilename, utils::Properties &props) :noResult(0){
     
         //set option
         SetOptions(props);
@@ -19,31 +19,30 @@ namespace ycsbc {
         }
         
 
-        db_ = new scaledkv::NVMScaledKV();
+        db_ = new NVMLevelHash();
         if(!db_) {
-            printf("creat scaledkv error\n");
+            printf("creat nvmlevelhash error\n");
             AllocatorExit();
         }
-        db_->Initialize(m, key_size, buf_size);
     }
 
-    void ScaledKV::SetOptions(utils::Properties &props) {
+    void NvmLevelHash::SetOptions(utils::Properties &props) {
         path = "/pmem/key";
         valuepath = "/pmem/value";
         nvm_size = 100 * (1ULL << 30);
         nvm_value_size = 200 * (1ULL << 30);
-        m = 10;
-        key_size = scaledkv::NVM_KeySize;
-        value_size = scaledkv::NVM_ValueSize;
-        buf_size = key_size + value_size + 1;
+        key_size = NVM_KeySize;
+        value_size = NVM_ValueSize;
+        
 
     }
 
 
-    int ScaledKV::Read(const std::string &table, const std::string &key, const std::vector<std::string> *fields,
+    int NvmLevelHash::Read(const std::string &table, const std::string &key, const std::vector<std::string> *fields,
                       std::vector<KVPair> &result) {
         string value;
-        value = db_->Get(key);
+        uint64_t keyu = char8toint64(key.c_str());
+        value = db_->Get(keyu);
         if(value.empty()){
             noResult++;
         }
@@ -51,42 +50,46 @@ namespace ycsbc {
     }
 
 
-    int ScaledKV::Scan(const std::string &table, const std::string &key, int len, const std::vector<std::string> *fields,
+    int NvmLevelHash::Scan(const std::string &table, const std::string &key, int len, const std::vector<std::string> *fields,
                       std::vector<std::vector<KVPair>> &result) {
          std::vector<std::string> values;
-        db_->GetRange(key, "", values, len);
+         uint64_t keyu = char8toint64(key.c_str());
+        db_->GetRange(keyu, 0, values, len);
+        //printf("scan:%ld,%d\n",values.size(),len);
         return DB::kOK;
     }
 
-    int ScaledKV::Insert(const std::string &table, const std::string &key,
+    int NvmLevelHash::Insert(const std::string &table, const std::string &key,
                         std::vector<KVPair> &values){
         string value;
         value.append(value_size, 'a');
-        db_->Insert(key, value);
+        uint64_t keyu = char8toint64(key.c_str());
+        db_->Insert(keyu, value);
         return DB::kOK;
     }
 
-    int ScaledKV::Update(const std::string &table, const std::string &key, std::vector<KVPair> &values) {
+    int NvmLevelHash::Update(const std::string &table, const std::string &key, std::vector<KVPair> &values) {
         return Insert(table,key,values);
     }
 
-    int ScaledKV::Delete(const std::string &table, const std::string &key) {
-        db_->Delete(key);
+    int NvmLevelHash::Delete(const std::string &table, const std::string &key) {
+        uint64_t keyu = char8toint64(key.c_str());
+        db_->Delete(keyu);
         return DB::kOK;
     }
 
-    void ScaledKV::PrintStats() {
+    void NvmLevelHash::PrintStats() {
         //if(noResult != 0) {
             cout<<"read not found:"<<noResult<<endl;
         //}
     }
 
-    ScaledKV::~ScaledKV() {
+    NvmLevelHash::~NvmLevelHash() {
         delete db_;
         AllocatorExit();
     }
 
-    void ScaledKV::SerializeValues(std::vector<KVPair> &kvs, std::string &value) {
+    void NvmLevelHash::SerializeValues(std::vector<KVPair> &kvs, std::string &value) {
         value.clear();
         PutFixed64(&value, kvs.size());
         for(unsigned int i=0; i < kvs.size(); i++){
@@ -97,7 +100,7 @@ namespace ycsbc {
         }
     }
 
-    void ScaledKV::DeSerializeValues(std::string &value, std::vector<KVPair> &kvs){
+    void NvmLevelHash::DeSerializeValues(std::string &value, std::vector<KVPair> &kvs){
         uint64_t offset = 0;
         uint64_t kv_num = 0;
         uint64_t key_size = 0;
