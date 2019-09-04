@@ -10,7 +10,7 @@
 
 #include <string>
 #include "db/basic_db.h"
-#include "db/nvmwort_db.h"
+#include "db/nvmskiplist_db.h"
 
 using namespace std;
 using ycsbc::DB;
@@ -19,9 +19,9 @@ using ycsbc::DBFactory;
 DB* DBFactory::CreateDB(utils::Properties &props) {
   if (props["dbname"] == "basic") {
     return new BasicDB;
-  } else if (props["dbname"] == "nvmwort") {
-    std::string dbpath = props.GetProperty("dbpath","/tmp/test-nvmwort");
-    return new NvmWort(dbpath.c_str(), props);
+  } else if (props["dbname"] == "nvmskiplist") {
+    std::string dbpath = props.GetProperty("dbpath","/tmp/test-nvmskiplist");
+    return new NvmSkiplist(dbpath.c_str(), props);
   } else return NULL;
 }
 

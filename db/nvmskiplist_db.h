@@ -2,22 +2,22 @@
 // 
 //
 
-#ifndef YCSB_C_NVMWORT_DB_H
-#define YCSB_C_NVMWORT_DB_H
+#ifndef YCSB_C_NVMSKIPLIST_DB_H
+#define YCSB_C_NVMSKIPLIST_DB_H
 
 #include "core/db.h"
 #include <iostream>
 #include <string>
 #include "core/properties.h"
-#include <nvmwort/nvm_wort.h>
+#include <nvmskiplist/persistent_skiplist_wrapper.h>
 
 using std::cout;
 using std::endl;
 
 namespace ycsbc {
-    class NvmWort : public DB{
+    class NvmSkiplist : public DB{
     public :
-        NvmWort(const char *dbfilename, utils::Properties &props);
+        NvmSkiplist(const char *dbfilename, utils::Properties &props);
         int Read(const std::string &table, const std::string &key,
                  const std::vector<std::string> *fields,
                  std::vector<KVPair> &result);
@@ -37,10 +37,10 @@ namespace ycsbc {
 
         void PrintStats();
 
-        ~NvmWort();
+        ~NvmSkiplist();
 
     private:
-        NVMWort *db_;
+        rocksdb::PersistentSkiplistWrapper *db_;
         unsigned noResult;
 
         void SetOptions(utils::Properties &props);
@@ -58,4 +58,4 @@ namespace ycsbc {
 }
 
 
-#endif //YCSB_C_NVMWORT_DB_H
+#endif //YCSB_C_NVMSKIPLIST_DB_H
