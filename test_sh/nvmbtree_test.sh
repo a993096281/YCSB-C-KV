@@ -6,4 +6,8 @@ moreworkloads="workloads/workloada.spec:workloads/workloadb.spec:workloads/workl
 
 #./ycsbc -db nvmbtree -dbpath $dbpath -threads 1 -P $workload -load true -run true -dbstatistics true
 
-./ycsbc -db nvmbtree -dbpath $dbpath -threads 1 -P $workload -load true -morerun $moreworkloads -dbstatistics true
+#./ycsbc -db nvmbtree -dbpath $dbpath -threads 1 -P $workload -load true -morerun $moreworkloads -dbstatistics true
+
+cmd="./ycsbc -db nvmbtree -dbpath $dbpath -threads 1 -P $workload -load true -morerun $moreworkloads -dbstatistics true "
+echo $cmd
+eval $cmd
