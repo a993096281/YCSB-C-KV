@@ -69,6 +69,8 @@ namespace ycsbc {
     }
 
     int NvmLevelHash::Update(const std::string &table, const std::string &key, std::vector<KVPair> &values) {
+        uint64_t keyu = char8toint64(key.c_str());
+        db_->Delete(keyu);
         return Insert(table,key,values);
     }
 
