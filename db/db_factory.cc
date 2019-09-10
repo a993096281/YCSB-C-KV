@@ -11,6 +11,7 @@
 #include <string>
 #include "db/basic_db.h"
 #include "db/nvmbtree_db.h"
+#include "db/nvmnvtree_db.h"
 
 using namespace std;
 using ycsbc::DB;
@@ -22,6 +23,9 @@ DB* DBFactory::CreateDB(utils::Properties &props) {
   } else if (props["dbname"] == "nvmbtree") {
     std::string dbpath = props.GetProperty("dbpath","/tmp/test-nvmbtree");
     return new NvmBtree(dbpath.c_str(), props);
+  } else if (props["dbname"] == "nvmnvtree") {
+    std::string dbpath = props.GetProperty("dbpath","/tmp/test-nvmnvtree");
+    return new NvmNvtree(dbpath.c_str(), props);
   } else return NULL;
 }
 
